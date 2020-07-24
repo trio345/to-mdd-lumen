@@ -2,7 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\MidtransController;
+// midtrans
+use App\Http\Controllers\Midtrans\Config;
+use App\Http\Controllers\Midtrans\Transaction;
+use App\Http\Controllers\Midtrans\ApiRequestor;
+use App\Http\Controllers\Midtrans\SnapApiRequestor;
+use App\Http\Controllers\Midtrans\Notification;
+use App\Http\Controllers\Midtrans\CoreApi;
+use App\Http\Controllers\Midtrans\Snap;
+
+use App\Http\Controllers\Midtrans\Sanitizer;
+
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use App\Order;
@@ -70,7 +80,7 @@ class PaymentController extends Controller
             'data.attributes.transaction_status' => 'required'            
         ]);
 
-        $response = [
+        $req = [
             "order_id" => $request->input('data.attributes.order_id'),
             "transaction_id" => $request->input('data.attributes.transaction_id'),
             "payment_type" => $request->input('data.attributes.payment_type'),
@@ -78,15 +88,49 @@ class PaymentController extends Controller
             "transaction_time" => $request->input('data.attributes.transaction_time'),
             "transaction_status" => $request->input('data.attributes.transaction_status')
         ];
-        // $res = ["attributes" => $response];
-        $mid_res = new MidtransController(10, 20000);
-
-        if ( Payment::create($response) ){
-            return $mid_res->getSnapToken();
-        } else {
-            return response($content = ["status" => "failed"]);
-        }
+        Payment::create($req);
         
+
+        $order_items = OrderItem::with('products')->get();
+        // midtrans setup
+        $item_list = array();
+        Config::$serverKey = 'SB-Mid-server-RhcTfWbUDIJG780Eu7fYZP25';
+        if (!isset(Config::$serverKey)) {
+            return "Please enter the correct key";
+        }
+        Config::$isSanitized = true;
+
+        Config::$is3ds = true;
+
+         $item_list[] = [
+                'id' => $order_items->products->id,
+                'price' => $order_items->products->price,
+                'quantity' => $order_items->products->quantity,
+                'name' => $order_items->products->name
+        ];
+        
+        $item_details = $item_list;
+        $enable_payments = array('bank_transfer');
+
+        // Fill transaction details
+        $transaction = array(
+            'enabled_payments' => $enable_payments,
+            'transaction_details' => $request,
+            'item_details' => $item_details
+        );
+        // return $transaction;
+        try {
+            $snapToken = Snap::getSnapToken($transaction);
+            return response()->json([
+                "message"=> "success",
+                "status" => true,
+                "token" => $snapToken,
+                "results" => $request
+            ]);
+        } catch (\Exception $e) {
+            dd($e);
+            return ['code' => 0 , 'message' => 'failed'];
+        }
         
     }
 

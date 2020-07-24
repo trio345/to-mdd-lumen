@@ -20,11 +20,11 @@ class OrderController extends Controller
      */
     public function __construct()
     {
-        $this->gross_amount = 0;
+        // /
     }
 
     public function index(){
-        $datas = Order::all();
+        $datas = Order::with('order_items')->get();
         if ( $datas ){
             return response($content = ["status" => "success", "data" => ["attributes" => $datas]], $status = 201);
         }
@@ -32,22 +32,28 @@ class OrderController extends Controller
 
     public function update(Request $request, $id)
     {
-        $data = Order::find($id);
+        $order = Order::find($id);
 
         $this->validate($request, [
             'user_id' => 'required'
         ]);
 
-        $data->name = $request->input('name');
-        $data->price = $request->input('price');
-
-            
-        if ( $data->save() ){
-            return response($content = ["status" => "success", "data" => ["attributes" => $data]], $status = 201);
-        } else {
-            return response($content = ["status" => "failed"]);
-        }
+        $request_all = $request->all();
+        $order->user_id = $request_all["data"]["attributes"]["user_id"];
+        $order->status = 'created';
+        
+        if ( $order->save() ){
+            $request_order = $request_all["data"]["attributes"]["order_detail"];
+            for ($i = 0; $i < count($request_order); $i++){
+                $order_item = OrderItem::where('order_id', $id)->first();
+                $order_item->product_id = $request_order[$i]["product_id"];
+                $order_item->quantity = $request_order[$i]["quantity"];
+                $order_item->save();
+            }
     }
+
+    return response($content = ["status" => "success", "messages" => "Data berhasil diupdate!"], 201);
+}
 
 
     public function create(Request $request)
@@ -81,27 +87,28 @@ class OrderController extends Controller
     }
 
 
-    public function find($id)
+    public function delete($id)
     {
-        $data = Order::find($id);
-
-        if ( $data ){
-            return response($content = ["status" => "success", "data" => ["attributes" => $data]], $status = 201);
+        $order = Order::find($id);
+        if ( $order->delete() ){
+            $order_item = OrderItem::where('order_id', $id)->delete();
+        
+            return response($content = ["status" => "success", "message" => "Data berhasil dihapus!"], $status = 201);
         } else {
             return response($content = ["status" => "failed", "messages"=>"customer not found!"]);
         }
     }
 
 
-    public function delete($id)
+    public function find($id)
     {
-        $order = Order::with('order_items')->where('order_id', $id);
+        $order_id = Order::find($id);
+        $getJoin = Order::where('id', $id)->with('order_items');
         
-        if ($order){
-            $order->delete();
-            return response($content = ["status" => "success", "messages" => "berhasil dihapus"], $status = 201);
-        } else {
-            return response($content = ["status" => "failed", "messages"=>"gagal dihapus!"]);
+        if ($order_id){
+            return response()->json(["messages"=>"success retrive data", "status" => true, "data" => $getJoin], 201);
+        } else{ 
+            return response()->json(["messages"=>"data not found"], 403);
         }
     }
 }

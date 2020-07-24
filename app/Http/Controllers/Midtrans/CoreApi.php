@@ -1,6 +1,6 @@
 <?php
 
-namespace Midtrans;
+namespace App\Http\Controllers\Midtrans;
 
 /**
  * Provide charge and capture functions for Core API

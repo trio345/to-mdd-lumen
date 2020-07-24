@@ -31,7 +31,7 @@ class OrderItem extends Model
 
      public function products()
      {
-         return $this->belongsTo('App\Products');
+         return $this->belongsTo('App\Product');
      }
     
 

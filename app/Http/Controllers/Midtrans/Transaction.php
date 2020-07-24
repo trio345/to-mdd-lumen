@@ -1,6 +1,6 @@
 <?php
 
-namespace Midtrans;
+namespace App\Http\Controllers\Midtrans;
 
 /**
  * API methods to get transaction status, approve and cancel transactions

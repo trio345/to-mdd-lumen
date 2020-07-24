@@ -1,6 +1,6 @@
 <?php
 
-namespace Midtrans;
+namespace App\Http\Controllers\Midtrans;
 
 /**
  * Read raw post input and parse as JSON. Provide getters for fields in notification object

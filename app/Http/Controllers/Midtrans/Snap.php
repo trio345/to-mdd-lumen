@@ -1,6 +1,6 @@
 <?php
 
-namespace Midtrans;
+namespace App\Http\Controllers\Midtrans;
 
 /**
  * Create Snap payment page and return snap token
