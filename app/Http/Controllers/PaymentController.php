@@ -88,49 +88,51 @@ class PaymentController extends Controller
             "transaction_time" => $request->input('data.attributes.transaction_time'),
             "transaction_status" => $request->input('data.attributes.transaction_status')
         ];
-        Payment::create($req);
+        if (Payment::create($req)){
+            return response()->json(["message" => "success", "status"=>true]);
+        };
         
 
-        $order_items = OrderItem::with('products')->get();
-        // midtrans setup
-        $item_list = array();
-        Config::$serverKey = 'SB-Mid-server-RhcTfWbUDIJG780Eu7fYZP25';
-        if (!isset(Config::$serverKey)) {
-            return "Please enter the correct key";
-        }
-        Config::$isSanitized = true;
+        // $order_items = OrderItem::with('products')->get();
+        // // midtrans setup
+        // $item_list = array();
+        // Config::$serverKey = 'SB-Mid-server-RhcTfWbUDIJG780Eu7fYZP25';
+        // if (!isset(Config::$serverKey)) {
+        //     return "Please enter the correct key";
+        // }
+        // Config::$isSanitized = true;
 
-        Config::$is3ds = true;
+        // Config::$is3ds = true;
 
-         $item_list[] = [
-                'id' => $order_items->products->id,
-                'price' => $order_items->products->price,
-                'quantity' => $order_items->products->quantity,
-                'name' => $order_items->products->name
-        ];
+        //  $item_list[] = [
+        //         'id' => $order_items->products->id,
+        //         'price' => $order_items->products->price,
+        //         'quantity' => $order_items->products->quantity,
+        //         'name' => $order_items->products->name
+        // ];
         
-        $item_details = $item_list;
-        $enable_payments = array('bank_transfer');
+        // $item_details = $item_list;
+        // $enable_payments = array('bank_transfer');
 
-        // Fill transaction details
-        $transaction = array(
-            'enabled_payments' => $enable_payments,
-            'transaction_details' => $request,
-            'item_details' => $item_details
-        );
-        // return $transaction;
-        try {
-            $snapToken = Snap::getSnapToken($transaction);
-            return response()->json([
-                "message"=> "success",
-                "status" => true,
-                "token" => $snapToken,
-                "results" => $request
-            ]);
-        } catch (\Exception $e) {
-            dd($e);
-            return ['code' => 0 , 'message' => 'failed'];
-        }
+        // // Fill transaction details
+        // $transaction = array(
+        //     'enabled_payments' => $enable_payments,
+        //     'transaction_details' => $request,
+        //     'item_details' => $item_details
+        // );
+        // // return $transaction;
+        // try {
+        //     $snapToken = Snap::getSnapToken($transaction);
+        //     return response()->json([
+        //         "message"=> "success",
+        //         "status" => true,
+        //         "token" => $snapToken,
+        //         "results" => $request
+        //     ]);
+        // } catch (\Exception $e) {
+        //     dd($e);
+        //     return ['code' => 0 , 'message' => 'failed'];
+        // }
         
     }
 
