@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\MidtransController;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
+use App\Order;
+use App\OrderItem;
 use App\Payment;
 
 
@@ -44,7 +47,7 @@ class PaymentController extends Controller
         $data->transaction_id = $request->input('data.attributes.transaction_id');
         $data->payment_type = $request->input('data.attributes.payment_type');
         $data->gross_amount = $request->input('data.attributes.gross_amount');
-        $data->transaction_time = $request->input('data.attributes.transaction_name');
+        $data->transaction_time = $request->input('data.attributes.transaction_time');
         $data->transaction_status = $request->input('data.attributes.transaction_status');
 
             
@@ -75,21 +78,17 @@ class PaymentController extends Controller
             "transaction_time" => $request->input('data.attributes.transaction_time'),
             "transaction_status" => $request->input('data.attributes.transaction_status')
         ];
-        $res = ["attributes" => $response];
+        // $res = ["attributes" => $response];
+        $mid_res = new MidtransController(10, 20000);
 
-            
         if ( Payment::create($response) ){
-            return response($content = ["status" => "success", "data" => $res], $status = 201);
+            return $mid_res->getSnapToken();
         } else {
             return response($content = ["status" => "failed"]);
         }
+        
+        
     }
-
-    public function postToMid(){
-
-    }
-
-
 
     public function find($id)
     {

@@ -68,11 +68,9 @@ class OrderController extends Controller
             $request_order = $request_all["data"]["attributes"]["order_detail"];
             for ($i = 0; $i < count($request_order); $i++){
                 $order_item = new OrderItem();
-                $product = new Product();
                 $order_item->order_id = $order->id;
                 $order_item->product_id = $request_order[$i]["product_id"];
                 $order_item->quantity = $request_order[$i]["quantity"];
-                // $this->gross_amount = ($request_order[$i]["quantity"] * $);
                 $order_item->save();
             }
 
