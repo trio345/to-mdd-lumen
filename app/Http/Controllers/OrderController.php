@@ -66,7 +66,6 @@ class OrderController extends Controller
             
             
             $request_order = $request_all["data"]["attributes"]["order_detail"];
-            
             for ($i = 0; $i < count($request_order); $i++){
                 $order_item = new OrderItem();
                 $product = new Product();
