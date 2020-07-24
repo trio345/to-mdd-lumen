@@ -30,12 +30,14 @@ class Order extends Model
 
      public function order_items()
      {
-         return $this->belongsToMany('App\Product');
+         return $this->hasMany('App\OrderItem', 'order_id');
      }
 
      public function payments()
      {
          return $this->hasOne('App\Payment');
      }
+
+     
 
 }

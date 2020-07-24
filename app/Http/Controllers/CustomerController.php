@@ -23,7 +23,7 @@ class CustomerController extends Controller
     public function index(){
         $datas = Customer::all();
         if ( $datas ){
-            return response($content = ["status" => "success", "data" => $datas], $status = 201);
+            return response($content = ["message" => "success retrive data", "status" => true,"data" => $datas], $status = 201);
         }
     }
 
@@ -32,16 +32,16 @@ class CustomerController extends Controller
         $data = Customer::find($id);
 
         $this->validate($request, [
-            'full_name' => 'required',
-            'username' => 'required',
-            'email' => 'required|email',
-            'phone_number' => 'required'
+            'data.attributes.full_name' => 'required',
+            'data.attributes.username' => 'required',
+            'data.attributes.email' => 'required|email',
+            'data.attributes.phone_number' => 'required'
         ]);
 
-        $data->full_name = $request->input('full_name');
-        $data->username = $request->input('username');
-        $data->email = $request->input('email');
-        $data->phone_number = $request->input('phone_number');
+        $data->full_name = $request->input('data.attributes.full_name');
+        $data->username = $request->input('data.attributes.username');
+        $data->email = $request->input('data.attributes.email');
+        $data->phone_number = $request->input('data.attributes.phone_number');
 
             
         if ( $data->save() ){
@@ -55,17 +55,17 @@ class CustomerController extends Controller
     public function create(Request $request)
     {
         $this->validate($request, [
-            'full_name' => 'required',
-            'username' => 'required',
-            'email' => 'required|email',
-            'phone_number' => 'required'
+            'data.attributes.full_name' => 'required',
+            'data.attributes.username' => 'required',
+            'data.attributes.email' => 'required|email',
+            'data.attributes.phone_number' => 'required'
         ]);
 
         $response = [
-            "full_name" => $request->input('full_name'),
-            "username" => $request->input('username'),
-            "email" => $request->input('email'),
-            "phone_number" => $request->input('phone_number')
+            "full_name" => $request->input('data.attributes.full_name'),
+            "username" => $request->input('data.attributes.username'),
+            "email" => $request->input('data.attributes.email'),
+            "phone_number" => $request->input('data.attributes.phone_number')
         ];
         $res = ["attributes" => $response];
 

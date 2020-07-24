@@ -32,12 +32,12 @@ class ProductController extends Controller
         $data = Product::find($id);
 
         $this->validate($request, [
-            'name' => 'required',
-            'price' => 'required'
+            'data.attributes.name' => 'required',
+            'data.attributes.price' => 'required'
         ]);
 
-        $data->name = $request->input('name');
-        $data->price = $request->input('price');
+        $data->name = $request->input('data.attributes.name');
+        $data->price = $request->input('data.attributes.price');
 
             
         if ( $data->save() ){
@@ -51,13 +51,13 @@ class ProductController extends Controller
     public function create(Request $request)
     {
         $this->validate($request, [
-            'name' => 'required',
-            'price' => 'required'
+            'data.attributes.name' => 'required',
+            'data.attributes.price' => 'required'
         ]);
 
         $response = [
-            "name" => $request->input('name'),
-            "price" => $request->input('price')
+            "name" => $request->input('data.attributes.name'),
+            "price" => $request->input('data.attributes.price')
         ];
         $res = ["attributes" => $response];
 
