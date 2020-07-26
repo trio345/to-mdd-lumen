@@ -3,21 +3,23 @@
 namespace App\Http\Controllers;
 
 // midtrans
-use App\Http\Controllers\Midtrans\Config;
-use App\Http\Controllers\Midtrans\Transaction;
-use App\Http\Controllers\Midtrans\ApiRequestor;
-use App\Http\Controllers\Midtrans\SnapApiRequestor;
-use App\Http\Controllers\Midtrans\Notification;
-use App\Http\Controllers\Midtrans\CoreApi;
-use App\Http\Controllers\Midtrans\Snap;
+// use App\Http\Controllers\Midtrans\Config;
+// use App\Http\Controllers\Midtrans\Transaction;
+// use App\Http\Controllers\Midtrans\ApiRequestor;
+// use App\Http\Controllers\Midtrans\SnapApiRequestor;
+// use App\Http\Controllers\Midtrans\Notification;
+// use App\Http\Controllers\Midtrans\CoreApi;
+// use App\Http\Controllers\Midtrans\Snap;
 
-use App\Http\Controllers\Midtrans\Sanitizer;
-
+// use App\Http\Controllers\Midtrans\Sanitizer;
+use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use App\Order;
 use App\OrderItem;
 use App\Payment;
+use Illuminate\Support\Facades\Http;
+
 
 
 
@@ -30,7 +32,7 @@ class PaymentController extends Controller
      */
     public function __construct()
     {
-        //
+        
     }
 
     public function index(){
@@ -72,70 +74,63 @@ class PaymentController extends Controller
     public function create(Request $request)
     {
         $this->validate($request, [
-            'data.attributes.order_id' => 'required',
-            'data.attributes.transaction_id' => 'required',
             'data.attributes.payment_type' => 'required',
             'data.attributes.gross_amount' => 'required',
-            'data.attributes.transaction_time' => 'required',
-            'data.attributes.transaction_status' => 'required'            
+            'data.attributes.bank' => 'required',
+            'data.attributes.order_id' => 'required'            
         ]);
 
-        $req = [
-            "order_id" => $request->input('data.attributes.order_id'),
-            "transaction_id" => $request->input('data.attributes.transaction_id'),
-            "payment_type" => $request->input('data.attributes.payment_type'),
-            "gross_amount" => $request->input('data.attributes.gross_amount'),
-            "transaction_time" => $request->input('data.attributes.transaction_time'),
-            "transaction_status" => $request->input('data.attributes.transaction_status')
+        $req = $request->all();
+
+        $transaction_req = [
+            "payment_type" => $req['data']['attributes']['payment_type'],
+            "bank_transfer" => [
+                "bank" => $req['data']['attributes']['bank']
+            ],
+            "transaction_details" => [
+                "order_id" => $req['data']['attributes']["order_id"],
+                "gross_amount" => $req['data']['attributes']["gross_amount"]
+            ]
         ];
-        if (Payment::create($req)){
-            return response()->json(["message" => "success", "status"=>true]);
-        };
+
+        $url = 'https://api.sandbox.midtrans.com/v2/charge';
+        $username = base64_encode('SB-Mid-server-RhcTfWbUDIJG780Eu7fYZP25:');
+        $http_header = [
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Basic '.$username,
+            'Accept' => 'application/json'
+        ];
+
+        $response = Http::withHeaders($http_header)->post($url, $transaction_req);
+        $data = $response->json();
+        if ( $data["status_code"] == "406") {
+            return response()->json(["status" => "failed", 
+                                     "message" => "Transaksi sudah dilakukan! periksa kembali order_id anda"], 406);
+        }else {
+            $insertData = [
+                "order_id" => $data["order_id"],
+                "transaction_id" => $data["transaction_id"],
+                "payment_type" => $data["payment_type"],
+                "gross_amount" => $data["gross_amount"],
+                "transaction_time" => $data["transaction_time"],
+                "transaction_status" => $data["transaction_status"]
+            ];
+            if (Payment::create($insertData)){
+                return response()->json(["status" => "success", 
+                                        "message" => "Transaksi berhasil mohon untuk membayar tagihan anda!",
+                                        "results" => $insertData
+            ], 200);
+            } else {
+                return response()->json(["status" => "failed",
+                                         "message" => "Data gagal disimpan!"
+            ], 401);
+            }
+        }
+
+        // $response = Http::withBasicAuth('SB-Mid-server-RhcTfWbUDIJG780Eu7fYZP25', '')->post($url, $transaction_req);
         
-
-        // $order_items = OrderItem::with('products')->get();
-        // // midtrans setup
-        // $item_list = array();
-        // Config::$serverKey = 'SB-Mid-server-RhcTfWbUDIJG780Eu7fYZP25';
-        // if (!isset(Config::$serverKey)) {
-        //     return "Please enter the correct key";
-        // }
-        // Config::$isSanitized = true;
-
-        // Config::$is3ds = true;
-
-        //  $item_list[] = [
-        //         'id' => $order_items->products->id,
-        //         'price' => $order_items->products->price,
-        //         'quantity' => $order_items->products->quantity,
-        //         'name' => $order_items->products->name
-        // ];
+        }
         
-        // $item_details = $item_list;
-        // $enable_payments = array('bank_transfer');
-
-        // // Fill transaction details
-        // $transaction = array(
-        //     'enabled_payments' => $enable_payments,
-        //     'transaction_details' => $request,
-        //     'item_details' => $item_details
-        // );
-        // // return $transaction;
-        // try {
-        //     $snapToken = Snap::getSnapToken($transaction);
-        //     return response()->json([
-        //         "message"=> "success",
-        //         "status" => true,
-        //         "token" => $snapToken,
-        //         "results" => $request
-        //     ]);
-        // } catch (\Exception $e) {
-        //     dd($e);
-        //     return ['code' => 0 , 'message' => 'failed'];
-        // }
-        
-    }
-
     public function find($id)
     {
         $data = Payment::find($id);
