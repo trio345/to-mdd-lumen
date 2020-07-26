@@ -117,7 +117,7 @@ class PaymentController extends Controller
             ];
             if (Payment::create($insertData)){
                 return response()->json(["status" => "success", 
-                                        "message" => "Transaksi berhasil mohon untuk membayar tagihan anda!",
+                                        "message" => "Transaksi berhasil mohon untuk menunggu konfirmasi!",
                                         "results" => $insertData
             ], 200);
             } else {
