@@ -155,12 +155,11 @@ class PaymentController extends Controller
     }
 
 
-    public function pushNotif(Response $response){
-        $payment = Payment::where('order_id', $response->order_id);
-        $payment->transaction_status = $response->transaction_status;
-        $payment->transaction_time = $response->transaction_time;
+    public function pushNotif(Response $request){
+        $payment = Payment::where('order_id', $request->order_id);
+        $payment->transaction_status = $request->transaction_status;
+        $payment->transaction_time = $request->transaction_time;
         $payment->save();
-        
 
     }
 }
