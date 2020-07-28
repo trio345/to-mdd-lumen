@@ -30,9 +30,10 @@ class PaymentController extends Controller
      *
      * @return void
      */
+    protected $auth;
     public function __construct()
     {
-        
+        $this->auth = base64_encode('SB-Mid-server-RhcTfWbUDIJG780Eu7fYZP25:');
     }
 
     public function index(){
@@ -94,10 +95,10 @@ class PaymentController extends Controller
         ];
 
         $url = 'https://api.sandbox.midtrans.com/v2/charge';
-        $username = base64_encode('SB-Mid-server-RhcTfWbUDIJG780Eu7fYZP25:');
+        
         $http_header = [
             'Content-Type' => 'application/json',
-            'Authorization' => 'Basic '.$username,
+            'Authorization' => 'Basic '.$this->auth,
             'Accept' => 'application/json'
         ];
 
@@ -151,5 +152,15 @@ class PaymentController extends Controller
         } else {
             return response($content = ["status" => "failed", "messages"=>"gagal dihapus!"]);
         }
+    }
+
+
+    public function pushNotif(Response $response){
+        $payment = Payment::where('order_id', $response->order_id);
+        $payment->transaction_status = $response->transaction_status;
+        $payment->transaction_time = $response->transaction_time;
+        $payment->save();
+        
+
     }
 }
