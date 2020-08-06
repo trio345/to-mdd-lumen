@@ -155,11 +155,24 @@ class PaymentController extends Controller
     }
 
 
-    public function pushNotif(Response $request){
-        $payment = Payment::where('order_id', $request->order_id);
-        $payment->transaction_status = $request->transaction_status;
-        $payment->transaction_time = $request->transaction_time;
-        $payment->save();
+    public function pushNotif(Request $request){
+        $req = $request->all();
+        $pay = Payment::where('order_id', $req["order_id"])->get();
+
+        $payment = Payment::find($pay[0]->id);
+        
+        if(!$pay){
+            return response()->json(["status" => "error", "messages" => "Id order not found"], 401);
+        }
+
+    
+        $payment->transaction_status = $req["transaction_status"];
+        $payment->transaction_time = $req["transaction_time"];
+        $payment->transaction_id = $req["transaction_id"];
+
+        if($payment->save()){
+            return response()->json(["status" => "success", "messages" => "Transaksi berhasil diperbaharui!"], 200);
+        }
 
     }
 }
